@@ -18,7 +18,7 @@ pub enum CompressionType {
     Zlib,
 }
 
-#[derive(clap::ArgEnum, Deserialize, Debug, Serialize, Clone)]
+#[derive(clap::ArgEnum, Deserialize, Debug, Serialize, Clone, uniffi::Enum)]
 pub enum PasteFormat {
     #[serde(rename = "plaintext")]
     Plaintext,
@@ -30,7 +30,7 @@ pub enum PasteFormat {
     Markdown,
 }
 
-#[derive(Deserialize, Debug, Serialize)]
+#[derive(Deserialize, Debug, Serialize, uniffi::Object)]
 pub struct Paste {
     pub status: i32,
     pub id: String,
@@ -106,7 +106,7 @@ pub struct Cipher {
 }
 
 #[skip_serializing_none]
-#[derive(Deserialize, Debug, Serialize)]
+#[derive(Deserialize, Debug, Serialize, uniffi::Record)]
 pub struct DecryptedPaste {
     pub paste: String,
     pub attachment: Option<String>,
@@ -114,7 +114,7 @@ pub struct DecryptedPaste {
 }
 
 #[skip_serializing_none]
-#[derive(Default, Deserialize, Debug, Serialize)]
+#[derive(Default, Deserialize, Debug, Serialize, uniffi::Record)]
 pub struct DecryptedComment {
     pub comment: String,
     pub nickname: Option<String>,
@@ -125,6 +125,7 @@ pub type DecryptedCommentsMap = HashMap<String, DecryptedComment>;
 
 /// comment.id -> [children comment.id]
 pub type CommentsAdjacencyMap = HashMap<String, Vec<String>>;
+
 
 #[derive(Deserialize, Debug, Serialize, Clone)]
 pub struct PostPasteResponse {
@@ -161,6 +162,7 @@ impl PostPasteResponse {
     }
 }
 
+#[uniffi::export]
 impl Paste {
     pub fn decrypt(&self, bs58_key: &str) -> PbResult<DecryptedPaste> {
         self.decrypt_with_password(bs58_key, "")
