@@ -27,7 +27,7 @@ pub enum PasteFormat {
     Markdown,
 }
 
-#[derive(Deserialize, Debug, Serialize)]
+#[derive(Deserialize, Debug, Serialize, uniffi::Object)]
 pub struct Paste {
     pub status: i32,
     pub id: String,
@@ -103,7 +103,7 @@ pub struct Cipher {
 }
 
 #[skip_serializing_none]
-#[derive(Deserialize, Debug, Serialize)]
+#[derive(Deserialize, Debug, Serialize, uniffi::Record)]
 pub struct DecryptedPaste {
     pub paste: String,
     pub attachment: Option<String>,
@@ -111,7 +111,7 @@ pub struct DecryptedPaste {
 }
 
 #[skip_serializing_none]
-#[derive(Deserialize, Debug, Serialize)]
+#[derive(Deserialize, Debug, Serialize, uniffi::Record)]
 pub struct DecryptedComment {
     pub comment: String,
     pub nickname: Option<String>,
@@ -152,6 +152,7 @@ impl PostPasteResponse {
     }
 }
 
+#[uniffi::export]
 impl Paste {
     pub fn decrypt(&self, bs58_key: &str) -> PbResult<DecryptedPaste> {
         self.decrypt_with_password(bs58_key, "")
