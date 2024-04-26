@@ -335,3 +335,4 @@ impl Serialize for Cipher {
         s.end()
     }
 }
+
