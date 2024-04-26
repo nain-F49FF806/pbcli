@@ -20,7 +20,7 @@ pub enum CompressionType {
     Zlib,
 }
 
-#[derive(Default, clap::ArgEnum, Deserialize, Debug, Serialize, Clone, Copy)]
+#[derive(Default, clap::ArgEnum, Deserialize, Debug, Serialize, Clone, Copy, uniffi::Enum)]
 pub enum PasteFormat {
     #[default]
     #[serde(rename = "plaintext")]
@@ -335,4 +335,3 @@ impl Serialize for Cipher {
         s.end()
     }
 }
-
