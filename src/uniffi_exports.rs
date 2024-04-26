@@ -3,8 +3,6 @@
 
 use std::collections::HashMap;
 
-use serde_json::json;
-
 use crate::{
     api, opts, uniffi_custom::Url, DecryptedComment, DecryptedPaste, PasteError, PbResult,
     PostPasteResponse,
@@ -25,21 +23,11 @@ fn read_paste(paste_url: &Url, password: &Option<String>) -> PbResult<ReadPasteO
     let paste = api.get_paste(paste_id)?;
 
     let decrypted_paste = paste.decrypt_with_password(bs58_key, password)?;
-    let mut decrypted_comments_map: HashMap<String, DecryptedComment> = HashMap::new();
+    let decrypted_comments = paste.decrypt_comments_with_password(bs58_key, password)?;
     let mut comment_children_map: HashMap<String, Vec<String>> = HashMap::new();
     if let Some(comments) = &paste.comments {
         for comment in comments {
-            // decrypt comment
             let id = comment.id.clone();
-            let decrypted_comment =
-                comment
-                    .decrypt_with_password(bs58_key, password)
-                    .unwrap_or(DecryptedComment {
-                        comment: "Couldn't decrypt this comment".into(),
-                        nickname: Some("pbcli".into()),
-                    });
-            decrypted_comments_map.insert(id.clone(), decrypted_comment);
-            // position in comment tree
             let parentid = if comment.pasteid == comment.parentid {
                 // top level comment
                 "".to_owned()
@@ -52,7 +40,7 @@ fn read_paste(paste_url: &Url, password: &Option<String>) -> PbResult<ReadPasteO
     }
     Ok(ReadPasteOutput {
         decrypted_paste,
-        decrypted_comments: decrypted_comments_map,
+        decrypted_comments,
         comment_tree: comment_children_map,
     })
 }
@@ -83,7 +71,7 @@ impl ReadPasteOutput {
     }
 
     fn format_comments(&self) -> String {
-        use serde_json::Value;
+        use serde_json::{Value,json};
 
         fn format_comments_below_id(
             id: &str,
