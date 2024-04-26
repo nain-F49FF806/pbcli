@@ -1,12 +1,24 @@
 //! Simpler interfaces exported to uniffi
 //! "inner" correspond to the native library structs
 
+use std::collections::HashMap;
+
 use crate::{
-    api, opts, uniffi_custom::Url, DecryptedPaste, PasteError, PbResult, PostPasteResponse,
+    api, opts, uniffi_custom::Url, DecryptedComment, DecryptedPaste, PasteError, PbResult,
+    PostPasteResponse,
 };
 
+#[derive(Debug, uniffi::Record)]
+struct ReadPasteOutput {
+    decrypted_paste: DecryptedPaste,
+    // id -> decrypted_comment
+    decrypted_comments: HashMap<String, DecryptedComment>,
+    // id -> [children ids]
+    comment_tree: HashMap<String, Vec<String>>,
+}
+
 #[uniffi::export]
-fn read_paste(paste_url: &Url, password: &Option<String>) -> PbResult<DecryptedPaste> {
+fn read_paste(paste_url: &Url, password: &Option<String>) -> PbResult<ReadPasteOutput> {
     let paste_id = paste_url.query().unwrap();
     let fragment = paste_url
         .fragment()
@@ -14,14 +26,44 @@ fn read_paste(paste_url: &Url, password: &Option<String>) -> PbResult<DecryptedP
     // '-' character may be found at start of fragment. This should be stripped.
     // It is used to activate "warn before read" feature for burn on read pastes.
     let bs58_key = fragment.strip_prefix('-').unwrap_or(fragment);
+    let password = password.as_deref().unwrap_or("");
 
     let api = api::API::new(paste_url.clone(), opts::Opts::default());
     let paste = api.get_paste(paste_id)?;
-    if let Some(password) = password {
-        paste.decrypt_with_password(bs58_key, password)
-    } else {
-        paste.decrypt(bs58_key)
+
+    let decrypted_paste = paste.decrypt_with_password(bs58_key, password)?;
+    let mut decrypted_comments_map: HashMap<String, DecryptedComment> = HashMap::new();
+    let mut comment_children_map: HashMap<String, Vec<String>> = HashMap::new();
+    if let Some(comments) = &paste.comments {
+        for comment in comments {
+            // decrypt comment
+            let id = comment.id.clone();
+            let decrypted_comment =
+                comment
+                    .decrypt_with_password(bs58_key, password)
+                    .unwrap_or(DecryptedComment {
+                        comment: "Couldn't decrypt this comment".into(),
+                        nickname: Some("pbcli".into()),
+                    });
+            decrypted_comments_map.insert(id.clone(), decrypted_comment);
+            // position in comment tree
+            let parentid = if comment.pasteid == comment.parentid {
+                // top level comment
+                "".to_owned()
+            } else {
+                // comment has parent
+                comment.parentid.clone()
+            };
+            comment_children_map.entry(parentid).or_default().push(id);
+        }
     }
+    Ok(
+        ReadPasteOutput{
+            decrypted_paste,
+            decrypted_comments: decrypted_comments_map,
+            comment_tree: comment_children_map
+        }
+    )
 }
 
 #[uniffi::export]

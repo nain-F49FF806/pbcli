@@ -11,7 +11,7 @@ pub mod util;
 pub use api::API;
 pub use error::{PasteError, PbResult};
 pub use opts::Opts;
-pub use privatebin::{DecryptedPaste, PasteFormat, PostPasteResponse};
+pub use privatebin::{DecryptedComment, DecryptedPaste, PasteFormat, PostPasteResponse};
 pub use util::check_filesize;
 
 uniffi::setup_scaffolding!();
