@@ -117,7 +117,7 @@ pub struct DecryptedComment {
     pub nickname: Option<String>,
 }
 
-#[derive(Deserialize, Debug, Serialize, Clone)]
+#[derive(Deserialize, Debug, Serialize, Clone, uniffi::Object)]
 pub struct PostPasteResponse {
     pub deletetoken: String,
     pub id: String,
@@ -127,6 +127,7 @@ pub struct PostPasteResponse {
     pub bs58key: String,
 }
 
+#[uniffi::export]
 impl PostPasteResponse {
     /// Return full paste url, i.e (base + ?id + #bs58key)
     pub fn to_paste_url(&self) -> url::Url {
