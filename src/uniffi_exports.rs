@@ -2,40 +2,11 @@
 //! "inner" correspond to the native library structs
 
 use crate::{
-    api, opts,
-    privatebin::{Paste, PostPasteResponse},
-    uniffi_custom::Url,
-    DecryptedPaste, PasteError, PbResult,
+    api, opts, uniffi_custom::Url, DecryptedPaste, PasteError, PbResult, PostPasteResponse,
 };
 
-///Simplified API instance for given url
-#[derive(uniffi::Object)]
-pub struct API {
-    inner: api::API,
-}
-
 #[uniffi::export]
-impl API {
-    /// Construct new API instance for given url
-    #[uniffi::constructor]
-    fn new(url: Url) -> API {
-        Self {
-            inner: api::API::new(url, opts::Opts::default()),
-        }
-    }
-
-    fn post_paste(
-        &self,
-        content: &DecryptedPaste,
-        password: &str,
-        opts: &Opts,
-    ) -> PbResult<PostPasteResponse> {
-        self.inner.post_paste(content, password, &opts.get_inner())
-    }
-}
-
-#[uniffi::export]
-fn read_paste(paste_url: Url, password: Option<String>) -> PbResult<DecryptedPaste> {
+fn read_paste(paste_url: &Url, password: &Option<String>) -> PbResult<DecryptedPaste> {
     let paste_id = paste_url.query().unwrap();
     let fragment = paste_url
         .fragment()
@@ -47,14 +18,25 @@ fn read_paste(paste_url: Url, password: Option<String>) -> PbResult<DecryptedPas
     let api = api::API::new(paste_url.clone(), opts::Opts::default());
     let paste = api.get_paste(paste_id)?;
     if let Some(password) = password {
-        paste.decrypt_with_password(bs58_key, &password)
+        paste.decrypt_with_password(bs58_key, password)
     } else {
         paste.decrypt(bs58_key)
     }
 }
 
+#[uniffi::export]
+fn write_paste(
+    host: &Url,
+    content: &DecryptedPaste,
+    opts: &PasteOpts,
+) -> PbResult<PostPasteResponse> {
+    let password = opts.password.as_deref().unwrap_or("");
+    let api = api::API::new(host.clone(), opts.into());
+    api.post_paste(content, password, &opts.into())
+}
+
 #[derive(uniffi::Record)]
-pub struct Opts {
+pub struct PasteOpts {
     // todo: set default enum variant once supported by uniffi
     format: crate::PasteFormat,
     #[uniffi(default = "1week")]
@@ -63,19 +45,18 @@ pub struct Opts {
     burn: bool,
     #[uniffi(default = false)]
     discussion: bool,
-    #[uniffi(default = None)]
     password: Option<String>,
 }
 
-impl Opts {
-    /// get native library version of Opts
-    fn get_inner(&self) -> opts::Opts {
+/// get native library version of Opts
+impl From<&PasteOpts> for opts::Opts {
+    fn from(paste_opts: &PasteOpts) -> Self {
         opts::Opts {
-            format: self.format,
-            expire: self.expire.clone(),
-            burn: self.burn,
-            discussion: self.discussion,
-            password: self.password.clone(),
+            format: paste_opts.format,
+            expire: paste_opts.expire.clone(),
+            burn: paste_opts.burn,
+            discussion: paste_opts.discussion,
+            password: paste_opts.password.clone(),
             ..Default::default()
         }
     }
