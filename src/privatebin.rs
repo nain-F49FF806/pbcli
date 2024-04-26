@@ -164,14 +164,14 @@ pub type DecryptedCommentsMap = HashMap<String, DecryptedComment>;
 /// comment.id -> [children comment.id]
 pub type CommentsAdjacencyMap = HashMap<String, Vec<String>>;
 
-#[derive(Deserialize, Debug, Serialize, Clone)]
+#[derive(Deserialize, Debug, Serialize, Clone, uniffi::Record)]
 pub struct PostCommentResponse {
     pub id: String,
     pub status: u32,
     pub url: String,
 }
 
-#[derive(Deserialize, Debug, Serialize, Clone)]
+#[derive(Deserialize, Debug, Serialize, Clone, uniffi::Object)]
 pub struct PostPasteResponse {
     pub deletetoken: String,
     pub id: String,
@@ -181,6 +181,7 @@ pub struct PostPasteResponse {
     pub bs58key: String,
 }
 
+#[uniffi::export]
 impl PostPasteResponse {
     /// Return full paste url, i.e (base + ?id + #bs58key)
     pub fn to_paste_url(&self) -> url::Url {

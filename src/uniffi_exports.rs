@@ -1,4 +1,9 @@
-use crate::{api, opts, privatebin::Paste, uniffi_custom::Url, PbResult};
+use crate::{
+    api, opts,
+    privatebin::{Paste, PostPasteResponse},
+    uniffi_custom::Url,
+    DecryptedPaste, PbResult,
+};
 
 /// Simpler interfaces exported to uniffi
 /// "inner" correspond to the native library structs
@@ -20,6 +25,15 @@ impl API {
 
     fn get_paste(&self, paste_id: &str) -> PbResult<Paste> {
         self.inner.get_paste(paste_id)
+    }
+
+    fn post_paste(
+        &self,
+        content: &DecryptedPaste,
+        password: &str,
+        opts: &Opts,
+    ) -> PbResult<PostPasteResponse> {
+        self.inner.post_paste(content, password, &opts.get_inner())
     }
 }
 
