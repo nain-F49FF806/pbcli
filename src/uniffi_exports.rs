@@ -24,24 +24,18 @@ fn read_paste(paste_url: &Url, password: &Option<String>) -> PbResult<ReadPasteO
 
     let decrypted_paste = paste.decrypt_with_password(bs58_key, password)?;
     let decrypted_comments = paste.decrypt_comments_with_password(bs58_key, password)?;
-    let mut comment_children_map: HashMap<String, Vec<String>> = HashMap::new();
+    let mut comment_tree: HashMap<String, Vec<String>> = HashMap::new();
     if let Some(comments) = &paste.comments {
-        for comment in comments {
-            let id = comment.id.clone();
-            let parentid = if comment.pasteid == comment.parentid {
-                // top level comment
-                "".to_owned()
-            } else {
-                // comment has parent
-                comment.parentid.clone()
-            };
-            comment_children_map.entry(parentid).or_default().push(id);
+        for c in comments {
+            let id = c.id.clone();
+            let parentid = if c.parentid == c.pasteid {"".to_owned()} else {c.parentid.clone()};
+            comment_tree.entry(parentid).or_default().push(id);
         }
     }
     Ok(ReadPasteOutput {
         decrypted_paste,
         decrypted_comments,
-        comment_tree: comment_children_map,
+        comment_tree,
     })
 }
 
@@ -56,12 +50,13 @@ fn write_paste(
     api.post_paste(content, password, &opts.into())
 }
 
+
 #[derive(Debug, uniffi::Record)]
 struct ReadPasteOutput {
     decrypted_paste: DecryptedPaste,
-    // id -> decrypted_comment
+    /// id -> decrypted_comment
     decrypted_comments: HashMap<String, DecryptedComment>,
-    // id -> [children ids]
+    /// id -> [children ids]
     comment_tree: HashMap<String, Vec<String>>,
 }
 
