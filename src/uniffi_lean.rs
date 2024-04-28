@@ -1,5 +1,4 @@
-//! Simpler interfaces exported to uniffi
-//! "inner" correspond to the native library structs
+//! Simpler interfaces exported through uniffi
 
 use crate::{
     api, opts, privatebin::Paste, DecryptedPaste, PbResult, PostPasteResponse,
