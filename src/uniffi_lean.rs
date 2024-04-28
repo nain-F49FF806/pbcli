@@ -2,8 +2,10 @@
 //! "inner" correspond to the native library structs
 
 use crate::{
-    api, opts, privatebin::Paste, uniffi_custom::Url, DecryptedPaste, PbResult, PostPasteResponse,
+    api, opts, privatebin::Paste, DecryptedPaste, PbResult, PostPasteResponse,
+    UniffiCustomTypeConverter,
 };
+use url::Url;
 
 #[uniffi::export]
 fn post_paste(paste_url: &Url) -> PbResult<Paste> {
@@ -47,5 +49,22 @@ impl From<&PasteOpts> for opts::Opts {
             password: paste_opts.password.clone(),
             ..Default::default()
         }
+    }
+}
+
+// Custom UniFFI types conversion
+
+// `Url` as a custom type, with `String` as the Builtin
+uniffi::custom_type!(Url, String);
+
+impl UniffiCustomTypeConverter for Url {
+    type Builtin = String;
+
+    fn into_custom(val: Self::Builtin) -> uniffi::Result<Self> {
+        val.parse::<Url>().map_err(|e| e.into())
+    }
+
+    fn from_custom(obj: Self) -> Self::Builtin {
+        obj.as_str().to_owned()
     }
 }

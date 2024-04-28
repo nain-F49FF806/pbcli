@@ -4,8 +4,7 @@ pub mod crypto;
 pub mod error;
 pub mod opts;
 pub mod privatebin;
-pub mod uniffi_custom;
-pub mod uniffi_exports;
+pub mod uniffi_lean;
 pub mod util;
 
 pub use api::API;
