@@ -58,7 +58,7 @@ impl Decryptable for Paste {
     }
 }
 
-#[derive(Default, Deserialize, Debug, Serialize)]
+#[derive(Default, Deserialize, Debug, Serialize, uniffi::Object)]
 pub struct Comment {
     pub id: String,
     pub pasteid: String,
@@ -287,6 +287,7 @@ impl Paste {
     }
 }
 
+#[uniffi::export]
 impl Comment {
     pub fn decrypt(&self, bs58_key: &str) -> PbResult<DecryptedComment> {
         self.decrypt_with_password(bs58_key, "")
