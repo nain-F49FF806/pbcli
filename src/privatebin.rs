@@ -20,7 +20,8 @@ pub enum CompressionType {
     Zlib,
 }
 
-#[derive(Default, clap::ArgEnum, Deserialize, Debug, Serialize, Clone, Copy, uniffi::Enum)]
+#[derive(Default, clap::ArgEnum, Deserialize, Debug, Serialize, Clone, Copy)]
+#[cfg_attr(feature = "uniffi", derive(uniffi::Enum))]
 pub enum PasteFormat {
     #[default]
     #[serde(rename = "plaintext")]
@@ -33,8 +34,8 @@ pub enum PasteFormat {
     Markdown,
 }
 
-#[skip_serializing_none]
-#[derive(Default, Deserialize, Debug, Serialize, uniffi::Object)]
+#[derive(Default, Deserialize, Debug, Serialize)]
+#[cfg_attr(feature = "uniffi", derive(uniffi::Object))]
 pub struct Paste {
     pub status: Option<i32>,
     pub id: String,
@@ -58,7 +59,7 @@ impl Decryptable for Paste {
     }
 }
 
-#[derive(Default, Deserialize, Debug, Serialize, uniffi::Object)]
+#[derive(Default, Deserialize, Debug, Serialize)]
 pub struct Comment {
     pub id: String,
     pub pasteid: String,
@@ -144,7 +145,8 @@ impl Cipher {
 }
 
 #[skip_serializing_none]
-#[derive(Default, Deserialize, Debug, Serialize, uniffi::Record)]
+#[derive(Deserialize, Debug, Serialize)]
+#[cfg_attr(feature = "uniffi", derive(uniffi::Record))]
 pub struct DecryptedPaste {
     pub paste: String,
     pub attachment: Option<String>,
@@ -152,7 +154,8 @@ pub struct DecryptedPaste {
 }
 
 #[skip_serializing_none]
-#[derive(Default, Deserialize, Debug, Serialize, uniffi::Record)]
+#[derive(Default, Deserialize, Debug, Serialize)]
+#[cfg_attr(feature = "uniffi", derive(uniffi::Record))]
 pub struct DecryptedComment {
     pub comment: String,
     pub nickname: Option<String>,
@@ -164,14 +167,16 @@ pub type DecryptedCommentsMap = HashMap<String, DecryptedComment>;
 /// comment.id -> [children comment.id]
 pub type CommentsAdjacencyMap = HashMap<String, Vec<String>>;
 
-#[derive(Deserialize, Debug, Serialize, Clone, uniffi::Record)]
+#[derive(Deserialize, Debug, Serialize, Clone)]
+#[cfg_attr(feature = "uniffi", derive(uniffi::Object))]
 pub struct PostCommentResponse {
     pub id: String,
     pub status: u32,
     pub url: String,
 }
 
-#[derive(Deserialize, Debug, Serialize, Clone, uniffi::Object)]
+#[derive(Deserialize, Debug, Serialize, Clone)]
+#[cfg_attr(feature = "uniffi", derive(uniffi::Object))]
 pub struct PostPasteResponse {
     pub deletetoken: String,
     pub id: String,
@@ -181,7 +186,7 @@ pub struct PostPasteResponse {
     pub bs58key: String,
 }
 
-#[uniffi::export]
+#[cfg_attr(feature = "uniffi", uniffi::export)]
 impl PostPasteResponse {
     /// Return full paste url, i.e (base + ?id + #bs58key)
     pub fn to_paste_url(&self) -> url::Url {
@@ -207,7 +212,7 @@ impl PostPasteResponse {
     }
 }
 
-#[uniffi::export]
+#[cfg_attr(feature = "uniffi", uniffi::export)]
 impl Paste {
     pub fn decrypt(&self, bs58_key: &str) -> PbResult<DecryptedPaste> {
         self.decrypt_with_password(bs58_key, "")

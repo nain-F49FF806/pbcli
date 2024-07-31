@@ -8,13 +8,15 @@ use rand_chacha::rand_core::{RngCore, SeedableRng};
 use reqwest::{Method, Url};
 use std::str::FromStr;
 
-#[derive()]
+#[cfg_attr(feature = "uniffi", derive(uniffi::Object))]
 pub struct API {
     base: Url,
     opts: Opts,
 }
 
+#[cfg_attr(feature = "uniffi", uniffi::export)]
 impl API {
+    #[cfg_attr(feature = "uniffi", uniffi::constructor)]
     pub fn new(mut url: Url, opts: Opts) -> Self {
         url.set_fragment(None);
         url.set_query(None);
@@ -23,7 +25,9 @@ impl API {
         }
         Self { base: url, opts }
     }
+}
 
+impl API {
     fn get_oidc_access_token(&self) -> PbResult<String> {
         let oidc_token_endpoint = self.opts.oidc_token_url.as_ref().unwrap();
         let oidc_client_id = self.opts.oidc_client_id.as_ref().unwrap();
@@ -85,7 +89,10 @@ impl API {
 
         Ok(request)
     }
+}
 
+#[cfg_attr(feature = "uniffi", uniffi::export)]
+impl API {
     pub fn get_paste(&self, paste_id: &str) -> PbResult<Paste> {
         let url = reqwest::Url::parse_with_params(self.base.as_str(), [("pasteid", paste_id)])?;
         let value: serde_json::Value = self
@@ -200,7 +207,8 @@ impl API {
         }
     }
 
-    pub fn base(&self) -> &Url {
-        &self.base
+
+    pub fn base(&self) -> Url {
+        self.base.clone()
     }
 }
