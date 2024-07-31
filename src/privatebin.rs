@@ -34,7 +34,6 @@ pub enum PasteFormat {
     Markdown,
 }
 
-#[skip_serializing_none]
 #[derive(Default, Deserialize, Debug, Serialize)]
 #[cfg_attr(feature = "uniffi", derive(uniffi::Object))]
 pub struct Paste {
@@ -293,6 +292,7 @@ impl Paste {
     }
 }
 
+#[uniffi::export]
 impl Comment {
     pub fn decrypt(&self, bs58_key: &str) -> PbResult<DecryptedComment> {
         self.decrypt_with_password(bs58_key, "")
