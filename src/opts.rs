@@ -86,3 +86,29 @@ impl Opts {
             .unwrap_or_else(|| self.host.as_ref().unwrap())
     }
 }
+
+impl Default for Opts {
+    fn default() -> Self {
+        Opts {
+            url: None,
+            host: None,
+            format: PasteFormat::Plaintext,
+            expire: "1week".to_owned(),
+            size_limit: None,
+            json: false,
+            burn: false,
+            discussion: false,
+            comment: false,
+            comment_as: None,
+            comment_to: None,
+            download: None,
+            overwrite: false,
+            upload: None,
+            password: None,
+            oidc_client_id: None,
+            oidc_token_url: None,
+            oidc_username: None,
+            oidc_password: None,
+        }
+    }
+}
